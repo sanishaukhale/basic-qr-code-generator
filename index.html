@@ -26,6 +26,14 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
+        /* Custom Toggle Switch Style */
+        .dot { transition: all 0.3s ease-in-out; }
+        input:checked ~ .dot { transform: translateX(100%); background-color: #4f46e5; }
+        input:checked ~ .block { background-color: #e0e7ff; }
+        
+        input[type="range"] {
+            accent-color: #4f46e5;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -34,7 +42,7 @@
         <!-- Header -->
         <div class="text-center">
             <h1 class="text-3xl font-semibold text-slate-800 tracking-tight">QR Code Generator</h1>
-            <p class="text-slate-500 mt-2 text-sm">Convert any text or URL into a QR code with a custom logo.</p>
+            <p class="text-slate-500 mt-2 text-sm">Professional QR codes with custom logo spacing.</p>
         </div>
 
         <!-- Input Section -->
@@ -49,12 +57,12 @@
                 <p id="error-msg" class="text-red-500 text-xs mt-1 hidden">Please enter some content first.</p>
             </div>
 
-            <!-- Logo Upload -->
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Logo (Optional)</label>
+            <!-- Logo Upload & Options -->
+            <div class="space-y-3">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Logo & Spacing</label>
                 <div class="flex items-center space-x-2">
                     <label class="flex-1 flex flex-col items-center px-4 py-2 bg-white text-slate-500 rounded-lg border border-dashed border-slate-300 cursor-pointer hover:border-indigo-400 hover:text-indigo-500 transition-colors">
-                        <span id="logo-name" class="text-xs truncate max-w-[200px]">Click to upload logo</span>
+                        <span id="logo-name" class="text-xs truncate max-w-[200px]">Upload Logo</span>
                         <input type='file' id="logo-input" class="hidden" accept="image/*" onchange="updateLogoLabel(this)" />
                     </label>
                     <button onclick="clearLogo()" class="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Remove logo">
@@ -63,15 +71,45 @@
                         </svg>
                     </button>
                 </div>
+                
+                <!-- Logo Spacing Controls (Hidden until logo uploaded) -->
+                <div id="logo-options" class="space-y-3 p-3 bg-slate-50 rounded-xl hidden border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-slate-600">Auto-remove background</span>
+                        <label for="remove-bg" class="flex items-center cursor-pointer">
+                            <div class="relative">
+                                <input type="checkbox" id="remove-bg" class="sr-only" checked onchange="generateQR()">
+                                <div class="block bg-slate-200 w-8 h-5 rounded-full transition-colors"></div>
+                                <div class="dot absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform"></div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between">
+                            <label class="text-xs font-medium text-slate-600">Logo Size</label>
+                            <span id="size-val" class="text-xs text-slate-400">22%</span>
+                        </div>
+                        <input type="range" id="logo-size" min="10" max="30" value="22" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer" oninput="updateRangeVal('size-val', this.value + '%'); generateQR();">
+                    </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between">
+                            <label class="text-xs font-medium text-slate-600">Logo Padding (Space)</label>
+                            <span id="padding-val" class="text-xs text-slate-400">8px</span>
+                        </div>
+                        <input type="range" id="logo-padding" min="0" max="20" value="8" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer" oninput="updateRangeVal('padding-val', this.value + 'px'); generateQR();">
+                    </div>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label for="qr-size" class="block text-sm font-medium text-slate-700 mb-1">Size</label>
+                    <label for="qr-size" class="block text-sm font-medium text-slate-700 mb-1">QR Resolution</label>
                     <select id="qr-size" class="w-full px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
-                        <option value="256">Small (256px)</option>
                         <option value="512" selected>Medium (512px)</option>
-                        <option value="1024">Large (1024px)</option>
+                        <option value="1024">High (1024px)</option>
+                        <option value="2048">Ultra (2048px)</option>
                     </select>
                 </div>
                 <div class="flex items-end">
@@ -79,7 +117,7 @@
                         onclick="clearAll()" 
                         class="w-full px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg font-medium transition-colors"
                     >
-                        Reset
+                        Reset All
                     </button>
                 </div>
             </div>
@@ -114,25 +152,35 @@
     <script>
         function updateLogoLabel(input) {
             const label = document.getElementById('logo-name');
+            const options = document.getElementById('logo-options');
             if (input.files && input.files[0]) {
                 label.innerText = input.files[0].name;
+                options.classList.remove('hidden');
+                generateQR(); // Auto-generate on upload
             } else {
-                label.innerText = "Click to upload logo";
+                label.innerText = "Upload Logo";
+                options.classList.add('hidden');
             }
+        }
+
+        function updateRangeVal(id, val) {
+            document.getElementById(id).innerText = val;
         }
 
         function clearLogo() {
             const input = document.getElementById('logo-input');
             input.value = "";
             updateLogoLabel(input);
+            if(document.getElementById('qr-input').value.trim()) {
+                generateQR();
+            }
         }
 
         async function generateQR() {
-            // Check for library existence using both common names
             const qrLib = window.QRCode || (window.qrcode ? window.qrcode : null);
             
             if (!qrLib) {
-                alert("The QR library is still loading or failed to load. Please refresh and try again.");
+                alert("The QR library is still loading. Please try again in a moment.");
                 return;
             }
 
@@ -142,8 +190,11 @@
             const error = document.getElementById('error-msg');
             const wrapper = document.getElementById('qrcode-wrapper');
             const logoInput = document.getElementById('logo-input');
+            
+            const removeBg = document.getElementById('remove-bg').checked;
+            const logoSizePercent = parseInt(document.getElementById('logo-size').value) / 100;
+            const logoPadding = parseInt(document.getElementById('logo-padding').value);
 
-            // Validation
             if (!input.value.trim()) {
                 error.classList.remove('hidden');
                 input.classList.add('border-red-500');
@@ -155,13 +206,11 @@
             input.classList.remove('border-red-500');
             wrapper.innerHTML = "";
             
-            // Create Canvas element
             const canvas = document.createElement('canvas');
             wrapper.appendChild(canvas);
 
             try {
-                // Generate QR Code on Canvas
-                // Level 'H' is required to survive the logo overlay
+                // High error correction is vital when placing a logo in the center
                 await qrLib.toCanvas(canvas, input.value, {
                     width: size,
                     margin: 2,
@@ -172,43 +221,73 @@
                     errorCorrectionLevel: 'H'
                 });
 
-                // Handle Logo Embedding
                 if (logoInput.files && logoInput.files[0]) {
                     const ctx = canvas.getContext('2d');
                     const logoImg = new Image();
-                    
                     logoImg.src = URL.createObjectURL(logoInput.files[0]);
                     
                     await new Promise((resolve, reject) => {
                         logoImg.onload = () => {
-                            // Calculate logo size (max 22% of QR size)
-                            const logoSize = size * 0.22;
-                            const x = (size - logoSize) / 2;
-                            const y = (size - logoSize) / 2;
+                            // Calculate logo and space dimensions
+                            const logoWidth = size * logoSizePercent;
+                            const x = (size - logoWidth) / 2;
+                            const y = (size - logoWidth) / 2;
 
-                            // Draw white background for logo (Standard fillRect for maximum compatibility)
-                            const padding = 6;
+                            // Create the "Space" (Quiet Zone) behind the logo
+                            // This clears the QR pixels so the logo looks clean
+                            const totalSpace = logoWidth + (logoPadding * 2);
+                            const spaceX = (size - totalSpace) / 2;
+                            const spaceY = (size - totalSpace) / 2;
+
+                            // Draw a clean white background to create the "Space"
                             ctx.fillStyle = '#ffffff';
-                            ctx.fillRect(x - padding, y - padding, logoSize + (padding * 2), logoSize + (padding * 2));
+                            ctx.beginPath();
+                            ctx.roundRect(spaceX, spaceY, totalSpace, totalSpace, 8);
+                            ctx.fill();
 
-                            // Draw the logo
-                            ctx.drawImage(logoImg, x, y, logoSize, logoSize);
+                            let logoSource = logoImg;
+                            
+                            if (removeBg) {
+                                // Processing for transparency
+                                const offCanvas = document.createElement('canvas');
+                                offCanvas.width = logoImg.width;
+                                offCanvas.height = logoImg.height;
+                                const offCtx = offCanvas.getContext('2d');
+                                offCtx.drawImage(logoImg, 0, 0);
+                                
+                                const imageData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+                                const data = imageData.data;
+
+                                // Background color sampling (top-left)
+                                const bgR = data[0], bgG = data[1], bgB = data[2];
+                                const tolerance = 45; 
+
+                                for (let i = 0; i < data.length; i += 4) {
+                                    const diff = Math.sqrt(
+                                        Math.pow(data[i] - bgR, 2) + 
+                                        Math.pow(data[i+1] - bgG, 2) + 
+                                        Math.pow(data[i+2] - bgB, 2)
+                                    );
+                                    if (diff < tolerance) data[i + 3] = 0;
+                                }
+                                offCtx.putImageData(imageData, 0, 0);
+                                logoSource = offCanvas;
+                            }
+
+                            // Center the logo inside the cleared space
+                            ctx.drawImage(logoSource, x, y, logoWidth, logoWidth);
                             resolve();
                         };
-                        logoImg.onerror = () => {
-                            console.error("Logo failed to load.");
-                            resolve(); // Continue anyway without logo
-                        };
+                        logoImg.onerror = reject;
                     });
                 }
 
                 container.classList.remove('hidden');
-                if(window.innerWidth < 768) {
+                if(window.innerWidth < 768 && container.classList.contains('hidden')) {
                     container.scrollIntoView({ behavior: 'smooth' });
                 }
             } catch (err) {
                 console.error("QR Error:", err);
-                alert("Generation failed. See console for details.");
             }
         }
 
@@ -218,27 +297,26 @@
             document.getElementById('error-msg').classList.add('hidden');
             document.getElementById('qr-input').classList.remove('border-red-500');
             document.getElementById('qrcode-wrapper').innerHTML = "";
+            document.getElementById('logo-size').value = 22;
+            document.getElementById('logo-padding').value = 8;
+            updateRangeVal('size-val', '22%');
+            updateRangeVal('padding-val', '8px');
             clearLogo();
         }
 
         function downloadQR() {
             const canvas = document.querySelector('#qrcode-wrapper canvas');
             if (canvas) {
-                try {
-                    const imgUrl = canvas.toDataURL("image/png");
-                    const link = document.createElement('a');
-                    link.href = imgUrl;
-                    link.download = `qr-code-${Date.now()}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } catch (e) {
-                    alert("Download failed. Your browser might be blocking the action.");
-                }
+                const imgUrl = canvas.toDataURL("image/png");
+                const link = document.createElement('a');
+                link.href = imgUrl;
+                link.download = `qr-pro-${Date.now()}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
         }
 
-        // Add Enter key support
         document.getElementById('qr-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
