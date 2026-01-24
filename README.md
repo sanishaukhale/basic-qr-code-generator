@@ -7,15 +7,6 @@ Add your logo, remove backgrounds, customize spacing, and export high-resolution
 
 ---
 
-## 🌐 Live Demo
-
-Try it out here:  
-👉 https://your-link-here.netlify.app  
-
-(Replace this link with your Netlify or GitHub Pages URL)
-
----
-
 ## ✨ Features
 
 - ⚡ **Fast as heck**  
