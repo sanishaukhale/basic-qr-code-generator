@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Generator - Clean & Simple</title>
+    <title>Basic QR code generator - Sanish Aukhale</title>
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->
@@ -36,12 +36,23 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex flex-col items-center">
 
-    <div class="max-w-md w-full glass-card rounded-2xl shadow-xl p-8 space-y-6 my-8">
-        <!-- Header -->
+    <!-- Global Header -->
+    <header class="w-full bg-white border-b border-slate-200 py-4 px-6 mb-8 sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+            <h1 class="text-xl font-semibold text-slate-800 tracking-tight">Basic QR code generator</h1>
+            <div class="flex items-center space-x-2 text-sm text-slate-500">
+                <span>By</span>
+                <span class="font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">Sanish Aukhale</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-md w-full glass-card rounded-2xl shadow-xl p-8 space-y-6 mb-12 mx-4">
+        <!-- Sub Header -->
         <div class="text-center">
-            <h1 class="text-3xl font-semibold text-slate-800 tracking-tight">QR Code Generator</h1>
+            <h2 class="text-2xl font-semibold text-slate-800 tracking-tight">Create QR Code</h2>
             <p class="text-slate-500 mt-2 text-sm">Professional QR codes with custom logo spacing.</p>
         </div>
 
@@ -149,6 +160,11 @@
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer class="mt-auto py-6 text-slate-400 text-xs">
+        &copy; <script>document.write(new Date().getFullYear())</script> Sanish Aukhale. Built with precision.
+    </footer>
+
     <script>
         function updateLogoLabel(input) {
             const label = document.getElementById('logo-name');
@@ -242,7 +258,11 @@
                             // Draw a clean white background to create the "Space"
                             ctx.fillStyle = '#ffffff';
                             ctx.beginPath();
-                            ctx.roundRect(spaceX, spaceY, totalSpace, totalSpace, 8);
+                            if (ctx.roundRect) {
+                                ctx.roundRect(spaceX, spaceY, totalSpace, totalSpace, 8);
+                            } else {
+                                ctx.rect(spaceX, spaceY, totalSpace, totalSpace);
+                            }
                             ctx.fill();
 
                             let logoSource = logoImg;
