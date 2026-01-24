@@ -1,7 +1,18 @@
 # 🚀 Super Easy QR Maker
 
+🔗 [**Live Demo**  ](https://basic-qr-code-generator-sanish.netlify.app/)
+
 Quickly whip up clean, professional QR codes with **Super Easy QR Maker** by **Sanish Aukhale**.  
 Add your logo, remove backgrounds, customize spacing, and export high-resolution QR codes that actually scan and look fire.
+
+---
+
+## 🌐 Live Demo
+
+Try it out here:  
+👉 https://your-link-here.netlify.app  
+
+(Replace this link with your Netlify or GitHub Pages URL)
 
 ---
 
@@ -62,33 +73,19 @@ Add your logo, remove backgrounds, customize spacing, and export high-resolution
 
 ---
 
-## 🌐 Deploy It Online
+## 🌍 Deploy It Online
 
 Since it’s a **single HTML file**, hosting is super easy.
 
 ### Option 1: Netlify
-1. Go to [https://netlify.com](https://netlify.com)  
+1. Go to https://netlify.com  
 2. Drag and drop your `index.html` file  
-3. Done. You’re live.
+3. You’re live instantly  
+4. Copy the URL and update it in this README
 
 ### Option 2: GitHub Pages
 1. Create a new GitHub repo  
 2. Upload `index.html`  
-3. Enable GitHub Pages from repo settings  
-4. Your QR maker is now public
-
----
-
-## 👤 The Maker
-
-**Sanish Aukhale**  
-Focused on keeping things **simple, fast, and visually sharp**.
-
----
-
-## 📄 License
-
-© 2026 Sanish Aukhale.  
-All rights reserved.
-
-Peace ✌️
+3. Go to **Settings → Pages**  
+4. Enable GitHub Pages  
+5. Your link will look like:  
