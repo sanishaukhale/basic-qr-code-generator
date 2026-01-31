@@ -2,7 +2,7 @@
 
 🔗 [**Live Demo**](https://basic-qr-code-generator-sanish.netlify.app/)
 
-A premium, privacy-focused QR code generator built with modern web technologies. Create high-resolution, customized QR codes for links, emails, and WiFi networks instantly.
+A premium, privacy-focused QR code generator built with modern web technologies. Create high-resolution, customized QR codes instantly.
 
 ![QR Pro Preview](https://via.placeholder.com/800x400?text=App+Preview)
 
@@ -10,19 +10,15 @@ A premium, privacy-focused QR code generator built with modern web technologies.
 
 ## ✨ Key Features
 
-- **🎨 Advanced Customization**
-  - Custom Foreground & Background colors.
-  - Logo support with **Auto-Background Removal**.
-  - Adjust logo size and padding.
+- **🎨 Advanced Shape Customization**
+  - **Outer Eye**: Choose between Square, Circle, or Rounded.
+  - **Inner Eye**: Choose between Square, Circle, or Diamond.
+  - **Colors**: Custom Foreground & Background colors.
+  - **Logo**: Support for central logos with **Auto-Background Removal**.
 
-- **📱 Smart Templates**
-  - **URL/Text**: Standard QR codes.
-  - **WiFi**: Create scannable WiFi login codes.
-  - **Email**: Pre-filled mailto links.
-
-- **⚡ High Performance**
+- **⚡ Instant Performance**
+  - **Real-time Generation**: QR codes update instantly as you type.
   - **Ultra-High Resolution**: Downloads are **2048px** for crisp printing.
-  - **Instant Generation**: No server calls, everything happens in your browser.
   - **History**: Automatically saves your recent scans (stored locally).
 
 - **🌍 Accessibility**
@@ -36,7 +32,7 @@ A premium, privacy-focused QR code generator built with modern web technologies.
 
 - **Core**: HTML5, CSS3, Vanilla JavaScript (ES6+)
 - **Styling**: Tailwind CSS + Custom Glassmorphism
-- **Library**: `QRCode.js` for base generation
+- **Library**: `QRCode.js` (Modified for custom shape rendering)
 - **Fonts**: Google Fonts (Outfit & Inter)
 
 ---
@@ -47,7 +43,7 @@ A premium, privacy-focused QR code generator built with modern web technologies.
 /
 ├── index.html   # Main application structure
 ├── style.css    # Custom styles and glassmorphism effects
-├── script.js    # Logic for QR generation, history, and UI
+├── script.js    # Logic for custom shape rendering and history
 └── README.md    # Documentation
 ```
 

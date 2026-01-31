@@ -7,11 +7,11 @@
     <title>Sanish's QR Pro - Premium Generator</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
-        rel="stylesheet">
-    <!-- QRCode.js -->
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.png">
+    <!-- Using cdnjs for better reliability. This provides 'QRCode' globally -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
@@ -54,77 +54,14 @@
         <div class="w-full lg:w-1/2 space-y-6">
             <div class="glass-panel rounded-3xl p-6 md:p-8 animate-fade-in-up">
 
-                <!-- Format Tabs -->
-                <div class="flex space-x-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                    <button
-                        class="tab-btn active px-4 py-2 rounded-xl text-sm font-medium border border-transparent hover:bg-slate-700/50 transition-all whitespace-nowrap"
-                        onclick="switchTab('url')">
-                        Link / Text
-                    </button>
-                    <button
-                        class="tab-btn px-4 py-2 rounded-xl text-sm font-medium border border-transparent hover:bg-slate-700/50 transition-all whitespace-nowrap"
-                        onclick="switchTab('email')">
-                        Email
-                    </button>
-                    <button
-                        class="tab-btn px-4 py-2 rounded-xl text-sm font-medium border border-transparent hover:bg-slate-700/50 transition-all whitespace-nowrap"
-                        onclick="switchTab('wifi')">
-                        WiFi
-                    </button>
-                </div>
-
-                <!-- Input Forms -->
+                <!-- Input Form -->
                 <div id="url-form" class="space-y-4">
                     <div>
                         <label
                             class="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Content</label>
-                        <textarea id="qr-input" placeholder="https://example.com"
-                            class="input-glass w-full mt-2 px-4 py-3 rounded-xl min-h-[100px] resize-none"></textarea>
-                    </div>
-                </div>
-
-                <div id="email-form" class="space-y-4 hidden">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Email
-                            Address</label>
-                        <input type="email" id="email-address" placeholder="john@example.com"
-                            class="input-glass w-full mt-2 px-4 py-3 rounded-xl">
-                    </div>
-                    <div>
-                        <label
-                            class="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Subject</label>
-                        <input type="text" id="email-subject" placeholder="Project Inquiry"
-                            class="input-glass w-full mt-2 px-4 py-3 rounded-xl">
-                    </div>
-                    <div>
-                        <label
-                            class="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Message</label>
-                        <textarea id="email-body" placeholder="Hi there..."
-                            class="input-glass w-full mt-2 px-4 py-3 rounded-xl min-h-[80px] resize-none"></textarea>
-                    </div>
-                </div>
-
-                <div id="wifi-form" class="space-y-4 hidden">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Network Name
-                            (SSID)</label>
-                        <input type="text" id="wifi-ssid" placeholder="MyWiFi"
-                            class="input-glass w-full mt-2 px-4 py-3 rounded-xl">
-                    </div>
-                    <div>
-                        <label
-                            class="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Password</label>
-                        <input type="text" id="wifi-pass" placeholder="Password123"
-                            class="input-glass w-full mt-2 px-4 py-3 rounded-xl">
-                    </div>
-                    <div>
-                        <label
-                            class="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Encryption</label>
-                        <select id="wifi-type" class="input-glass w-full mt-2 px-4 py-3 rounded-xl appearance-none">
-                            <option value="WPA">WPA/WPA2</option>
-                            <option value="WEP">WEP</option>
-                            <option value="nopass">No Password</option>
-                        </select>
+                        <textarea id="qr-input" placeholder="https://example.com or Text"
+                            class="input-glass w-full mt-2 px-4 py-3 rounded-xl min-h-[100px] resize-none"
+                            oninput="generateQR()"></textarea>
                     </div>
                 </div>
 
@@ -138,6 +75,94 @@
                         </svg>
                         Design & Colors
                     </h3>
+
+                    <!-- Shapes Controls -->
+                    <div class="grid grid-cols-2 gap-6 mb-4">
+                        <!-- Outer Shape -->
+                        <div>
+                            <label
+                                class="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1 block mb-3">Outer
+                                Eye</label>
+                            <div class="flex gap-2" id="outer-shape-selector">
+                                <!-- Square -->
+                                <button class="shape-btn active group" onclick="setShape('outer', 'square', this)"
+                                    title="Square">
+                                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" class="stroke-current">
+                                        <rect x="2" y="2" width="20" height="20" stroke="currentColor"
+                                            stroke-width="4" />
+                                    </svg>
+                                </button>
+                                <!-- Circle -->
+                                <button class="shape-btn group" onclick="setShape('outer', 'circle', this)"
+                                    title="Circle">
+                                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                    </svg>
+                                </button>
+                                <!-- Rounded -->
+                                <button class="shape-btn group" onclick="setShape('outer', 'rounded', this)"
+                                    title="Rounded">
+                                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                                        <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor"
+                                            stroke-width="4" />
+                                    </svg>
+                                </button>
+                                <!-- Leaf -->
+                                <button class="shape-btn group" onclick="setShape('outer', 'leaf', this)" title="Leaf">
+                                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                                        <path d="M2 12C2 6.477 6.477 2 12 2H22V12C22 17.523 17.523 22 12 22H2V12Z"
+                                            stroke="currentColor" stroke-width="4" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <input type="hidden" id="shape-outer" value="square"> <!-- Hidden input for logic -->
+                        </div>
+
+                        <!-- Inner Shape -->
+                        <div>
+                            <label
+                                class="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1 block mb-3">Inner
+                                Eye</label>
+                            <div class="flex gap-2 flex-wrap" id="inner-shape-selector">
+                                <!-- Square -->
+                                <button class="shape-btn active group" onclick="setShape('inner', 'square', this)"
+                                    title="Square">
+                                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                                        <rect x="2" y="2" width="20" height="20" />
+                                    </svg>
+                                </button>
+                                <!-- Circle -->
+                                <button class="shape-btn group" onclick="setShape('inner', 'circle', this)"
+                                    title="Circle">
+                                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                                        <circle cx="12" cy="12" r="10" />
+                                    </svg>
+                                </button>
+                                <!-- Diamond -->
+                                <button class="shape-btn group" onclick="setShape('inner', 'diamond', this)"
+                                    title="Diamond">
+                                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2L22 12L12 22L2 12L12 2Z" />
+                                    </svg>
+                                </button>
+                                <!-- Hexagon -->
+                                <button class="shape-btn group" onclick="setShape('inner', 'hexagon', this)"
+                                    title="Hexagon">
+                                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2l8.66 5v10L12 22l-8.66-5V7L12 2z" />
+                                    </svg>
+                                </button>
+                                <!-- Star -->
+                                <button class="shape-btn group" onclick="setShape('inner', 'star', this)" title="Star">
+                                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                                        <path
+                                            d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <input type="hidden" id="shape-inner" value="square"> <!-- Hidden input for logic -->
+                        </div>
+                    </div>
 
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
@@ -185,6 +210,32 @@
 
                         <div id="logo-controls"
                             class="hidden space-y-4 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                            <!-- Logo Shape -->
+                            <div>
+                                <label class="text-xs font-medium text-slate-400 block mb-2">Logo Shape</label>
+                                <div class="flex gap-2" id="logo-shape-selector">
+                                    <button class="shape-btn group" onclick="setLogoShape('square', this)"
+                                        title="Square">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                            <rect x="2" y="2" width="20" height="20" />
+                                        </svg>
+                                    </button>
+                                    <button class="shape-btn active group" onclick="setLogoShape('rounded', this)"
+                                        title="Rounded">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                            <rect x="2" y="2" width="20" height="20" rx="5" />
+                                        </svg>
+                                    </button>
+                                    <button class="shape-btn group" onclick="setLogoShape('circle', this)"
+                                        title="Circle">
+                                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                            <circle cx="12" cy="12" r="10" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <input type="hidden" id="logo-shape" value="rounded">
+                            </div>
+
                             <div class="flex justify-between items-center">
                                 <span class="text-xs font-medium text-slate-400">Remove Background</span>
                                 <input type="checkbox" id="remove-bg"
@@ -204,11 +255,7 @@
                     </div>
                 </div>
 
-                <!-- Generate Button -->
-                <button onclick="generateQR(true)"
-                    class="w-full mt-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/25 transition-all transform active:scale-[0.98] text-lg">
-                    Generate QR Code
-                </button>
+                <!-- Generate Button Removed (Auto-generates) -->
 
             </div>
         </div>

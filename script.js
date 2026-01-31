@@ -1,16 +1,16 @@
-let currentTab = 'url';
 let currentLogo = null;
+const RESOLUTION = 2048;
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     loadHistory();
-    
+
     // Sync initial color labels
     const fgInput = document.getElementById('color-fg');
     const bgInput = document.getElementById('color-bg');
 
-    if(fgInput) updateColorLabel('color-fg-hex', fgInput.value);
-    if(bgInput) updateColorLabel('color-bg-hex', bgInput.value);
+    if (fgInput) updateColorLabel('color-fg-hex', fgInput.value);
+    if (bgInput) updateColorLabel('color-bg-hex', bgInput.value);
 
     // Check share capability
     if (navigator.share) {
@@ -22,35 +22,15 @@ function updateColorLabel(id, val) {
     document.getElementById(id).innerText = val.toUpperCase();
 }
 
-// Tabs
-window.switchTab = function(tab) {
-    currentTab = tab;
-    // Update UI
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    // We can't rely on event.target if called programmatically easily without passing it, 
-    // so we find the button that calls this. 
-    // To keep it simple for the HTML onclicks:
-    const clickedBtn = document.querySelector(`button[onclick="switchTab('${tab}')"]`);
-    if(clickedBtn) clickedBtn.classList.add('active');
-    
-    // Hide all forms
-    document.getElementById('url-form').classList.add('hidden');
-    document.getElementById('email-form').classList.add('hidden');
-    document.getElementById('wifi-form').classList.add('hidden');
-
-    // Show selected
-    document.getElementById(`${tab}-form`).classList.remove('hidden');
-}
-
 // Color Inputs
 document.getElementById('color-fg').addEventListener('input', (e) => updateColorLabel('color-fg-hex', e.target.value));
 document.getElementById('color-bg').addEventListener('input', (e) => updateColorLabel('color-bg-hex', e.target.value));
 
-window.updateLabel = function(id, val) {
+window.updateLabel = function (id, val) {
     document.getElementById(id).innerText = val;
 }
 
-window.handleLogoUpload = function(input) {
+window.handleLogoUpload = function (input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -67,132 +47,292 @@ window.handleLogoUpload = function(input) {
     }
 }
 
-window.generateQR = async function(save = false) {
+window.setShape = function (type, shape, btn) {
+    // Update hidden input
+    document.getElementById(`shape-${type}`).value = shape;
+
+    // Update UI
+    const container = document.getElementById(`${type}-shape-selector`);
+    container.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Regenerate
+    generateQR();
+}
+
+// Main logic
+window.generateQR = async function (save = false) {
     const wrapper = document.getElementById('qr-wrapper');
     const actions = document.getElementById('actions');
-    
-    // Gather Content
-    let content = "";
-    let displayLabel = "";
+    const input = document.getElementById('qr-input');
 
-    if (currentTab === 'url') {
-        content = document.getElementById('qr-input').value.trim();
-        displayLabel = content;
-    } else if (currentTab === 'email') {
-        const email = document.getElementById('email-address').value.trim();
-        const sub = document.getElementById('email-subject').value.trim();
-        const body = document.getElementById('email-body').value.trim();
-        if(!email) {
-            if(save) alert("Please enter an email address"); 
-            return;
-        }
-        content = `mailto:${email}?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(body)}`;
-        displayLabel = `Email: ${email}`;
-    } else if (currentTab === 'wifi') {
-        const ssid = document.getElementById('wifi-ssid').value.trim();
-        const pass = document.getElementById('wifi-pass').value.trim();
-        const type = document.getElementById('wifi-type').value;
-        if(!ssid) {
-            if(save) alert("SSID is required");
-            return;
-        }
-        content = `WIFI:S:${ssid};T:${type};P:${pass};;`;
-        displayLabel = `WiFi: ${ssid}`;
+    const content = input.value.trim();
+
+    if (!content) {
+        wrapper.innerHTML = `
+            <div class="text-slate-500 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                </svg>
+                <p>Enter content to generate</p>
+            </div>
+        `;
+        actions.classList.add('hidden');
+        actions.classList.remove('flex');
+        return;
     }
 
-    if (!content) return; // Silent return if empty on auto-generation
-
-    // Clear previous
-    wrapper.innerHTML = "";
-    
-    // Colors
-    const colorDark = document.getElementById('color-fg').value;
-    const colorLight = document.getElementById('color-bg').value;
-
-    const canvas = document.createElement('canvas');
-    wrapper.appendChild(canvas);
-
     try {
-        // High resolution canvas
-        const size = 2048; 
-        await QRCode.toCanvas(canvas, content, {
-            width: size,
-            margin: 4,
-            color: {
-                dark: colorDark,
-                light: colorLight
-            },
-            errorCorrectionLevel: 'H'
-        });
+        // Create Data Matrix
+        const rawQR = QRCode.create(content, { errorCorrectionLevel: 'H' });
+        const modules = rawQR.modules;
+        const moduleCount = modules.size;
+
+        wrapper.innerHTML = "";
+        const canvas = document.createElement('canvas');
+        canvas.width = RESOLUTION;
+        canvas.height = RESOLUTION;
+        wrapper.appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+        const colorDark = document.getElementById('color-fg').value;
+        const colorLight = document.getElementById('color-bg').value;
+
+        const outerShape = document.getElementById('shape-outer')?.value || 'square';
+        const innerShape = document.getElementById('shape-inner')?.value || 'square';
+
+        // Background
+        ctx.fillStyle = colorLight;
+        ctx.fillRect(0, 0, RESOLUTION, RESOLUTION);
+
+        // Drawing calculation
+        const margin = 4;
+        const totalSize = moduleCount + (margin * 2);
+        const cellSize = RESOLUTION / totalSize;
+
+        ctx.fillStyle = colorDark;
+
+        // Render Loop
+        for (let r = 0; r < moduleCount; r++) {
+            for (let c = 0; c < moduleCount; c++) {
+                if (modules.get(c, r)) {
+                    const x = (c + margin) * cellSize;
+                    const y = (r + margin) * cellSize;
+
+                    // Check if it's an Eye
+                    const isEye = isFinderPattern(c, r, moduleCount);
+
+                    if (isEye.isEye) {
+                        // We will handle eyes separately to draw shapes
+                        // To avoid over-drawing, we can track if we've processed this block
+                        // But getting granular is pixel-based.
+
+                        // Simplest way: 
+                        // If it's the external 7x7 frame (Outer Eye)
+                        if (isEye.type === 'outer') {
+                            drawShape(ctx, x, y, cellSize, outerShape);
+                        }
+                        // If it's the internal 3x3 box (Inner Eye)
+                        else if (isEye.type === 'inner') {
+                            drawShape(ctx, x, y, cellSize, innerShape);
+                        }
+                        // Default square for the "space" between inner/outer (usually white) - we don't draw dark there anyway
+                        // BUT modules.get() returns true for the dark parts only.
+                        // The structure of the eye is: 7x7 outer ring (dark), 5x5 middle ring (light), 3x3 inner block (dark).
+                        // modules.get() will be TRUE for outer ring and inner block.
+                        // So we just need to know if this specific pixel belongs to outer or inner part.
+                    } else {
+                        // Body
+                        drawShape(ctx, x, y, cellSize, 'square'); // Always square for body for now (to be safe)
+                    }
+                }
+            }
+        }
 
         // Draw Logo if exists
         if (currentLogo) {
-            const ctx = canvas.getContext('2d');
-            // Calculate based on new large size
-            const logoSizePercent = parseInt(document.getElementById('logo-size').value) / 100;
-            const removeBg = document.getElementById('remove-bg').checked;
-            
-            const logoW = size * logoSizePercent;
-            const x = (size - logoW) / 2;
-            const y = (size - logoW) / 2;
-
-            // Clear center for logo
-            ctx.fillStyle = colorLight;
-            // Slightly larger backing box to avoid artifacts at edges
-            const bgSize = logoW; 
-            const bgX = (size - bgSize) / 2;
-            
-            if (ctx.roundRect) ctx.roundRect(bgX, bgX, bgSize, bgSize, 64); // Increased radius for large canvas
-            else ctx.fillRect(bgX, bgX, bgSize, bgSize);
-            ctx.fill();
-
-            // Draw Logo
-            let logoSource = currentLogo;
-
-            if (removeBg) {
-                    const offCanvas = document.createElement('canvas');
-                    offCanvas.width = currentLogo.width;
-                    offCanvas.height = currentLogo.height;
-                    const offCtx = offCanvas.getContext('2d');
-                    offCtx.drawImage(currentLogo, 0, 0);
-
-                    const imageData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
-                    const data = imageData.data;
-
-                    // Simple chroma key based on top-left pixel
-                    const bgR = data[0], bgG = data[1], bgB = data[2];
-                    const tolerance = 45;
-
-                    for (let i = 0; i < data.length; i += 4) {
-                        const diff = Math.sqrt(
-                            Math.pow(data[i] - bgR, 2) +
-                            Math.pow(data[i+1] - bgG, 2) +
-                            Math.pow(data[i+2] - bgB, 2)
-                        );
-                        if (diff < tolerance) data[i + 3] = 0;
-                    }
-                    offCtx.putImageData(imageData, 0, 0);
-                    logoSource = offCanvas;
-            }
-            
-            ctx.drawImage(logoSource, x, y, logoW, logoW);
+            drawLogo(ctx, RESOLUTION, colorLight);
         }
 
-        // Show actions
         actions.classList.remove('hidden');
         actions.classList.add('flex');
 
         if (save) {
-            saveToHistory(displayLabel, content, currentTab);
+            saveToHistory(content, content, 'url'); // Default to 'url' type now
         }
 
     } catch (err) {
         console.error(err);
-        if(save) alert("Error generating QR code");
+        if (save) alert("Error generating QR code");
     }
 }
 
-window.downloadQR = function() {
+// Helper to identify Finder Patterns
+// Finder pattern is 7x7
+function isFinderPattern(x, y, count) {
+    // Top Left
+    if (x < 7 && y < 7) {
+        return getEyePart(x, y, 0, 0);
+    }
+    // Top Right
+    if (x >= count - 7 && y < 7) {
+        return getEyePart(x, y, count - 7, 0);
+    }
+    // Bottom Left
+    if (x < 7 && y >= count - 7) {
+        return getEyePart(x, y, 0, count - 7);
+    }
+    return { isEye: false };
+}
+
+function getEyePart(x, y, ox, oy) {
+    // Relative coordinates
+    const rx = x - ox;
+    const ry = y - oy;
+
+    // Inner 3x3 center
+    if (rx >= 2 && rx <= 4 && ry >= 2 && ry <= 4) {
+        return { isEye: true, type: 'inner' };
+    }
+    // Outer Border (all other dark pixels in 7x7 are outer)
+    return { isEye: true, type: 'outer' };
+}
+
+function drawShape(ctx, x, y, size, shape) {
+    // Standard adjustment to avoid sub-pixel anti-aliasing gaps
+    const s = size + 0.5;
+
+    ctx.beginPath();
+    if (shape === 'circle') {
+        const cx = x + size / 2;
+        const cy = y + size / 2;
+        ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
+    } else if (shape === 'rounded') {
+        // A bit of rounding
+        ctx.roundRect(x, y, s, s, size * 0.4);
+    } else if (shape === 'leaf') {
+        // Top-Left and Bottom-Right rounded
+        ctx.roundRect(x, y, s, s, [size * 0.4, 0, size * 0.4, 0]);
+    } else if (shape === 'diamond') {
+        ctx.moveTo(x + size / 2, y);
+        ctx.lineTo(x + size, y + size / 2);
+        ctx.lineTo(x + size / 2, y + size);
+        ctx.lineTo(x, y + size / 2);
+        ctx.closePath();
+    } else if (shape === 'hexagon') {
+        // Flat topped hexagon
+        const r = size / 2;
+        const cx = x + r;
+        const cy = y + r;
+        ctx.moveTo(cx + r * Math.cos(0), cy + r * Math.sin(0));
+        for (let i = 1; i <= 6; i++) {
+            ctx.lineTo(cx + r * Math.cos(i * 2 * Math.PI / 6), cy + r * Math.sin(i * 2 * Math.PI / 6));
+        }
+    } else if (shape === 'star') {
+        // 5 Point Star
+        const cx = x + size / 2;
+        const cy = y + size / 2;
+        const spikes = 5;
+        const outerRadius = size / 2;
+        const innerRadius = size / 4;
+        let rot = Math.PI / 2 * 3;
+        let x1 = cx;
+        let y1 = cy;
+        const step = Math.PI / spikes;
+
+        ctx.moveTo(cx, cy - outerRadius);
+        for (let i = 0; i < spikes; i++) {
+            x1 = cx + Math.cos(rot) * outerRadius;
+            y1 = cy + Math.sin(rot) * outerRadius;
+            ctx.lineTo(x1, y1);
+            rot += step;
+
+            x1 = cx + Math.cos(rot) * innerRadius;
+            y1 = cy + Math.sin(rot) * innerRadius;
+            ctx.lineTo(x1, y1);
+            rot += step;
+        }
+        ctx.lineTo(cx, cy - outerRadius);
+        ctx.closePath();
+    } else {
+        // Square
+        ctx.rect(x, y, s, s);
+    }
+    ctx.fill();
+    ctx.closePath();
+}
+
+
+window.setLogoShape = function (shape, btn) {
+    document.getElementById('logo-shape').value = shape;
+    const container = document.getElementById('logo-shape-selector');
+    container.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    generateQR();
+}
+
+function drawLogo(ctx, totalSize, bgColor) {
+    const sizePercent = parseInt(document.getElementById('logo-size').value) / 100;
+    const removeBg = document.getElementById('remove-bg').checked;
+    const shape = document.getElementById('logo-shape').value || 'rounded';
+
+    const logoW = totalSize * sizePercent;
+    const x = (totalSize - logoW) / 2;
+    const y = (totalSize - logoW) / 2;
+
+    // Define Shape Path Helper
+    const definePath = () => {
+        ctx.beginPath();
+        if (shape === 'circle') {
+            ctx.arc(x + logoW / 2, y + logoW / 2, logoW / 2, 0, Math.PI * 2);
+        } else if (shape === 'rounded') {
+            if (ctx.roundRect) ctx.roundRect(x, y, logoW, logoW, logoW * 0.2); // 20% rounding
+            else ctx.rect(x, y, logoW, logoW);
+        } else {
+            ctx.rect(x, y, logoW, logoW);
+        }
+        ctx.closePath();
+    };
+
+    // 1. Draw Background Backing (The "Quiet Zone")
+    ctx.fillStyle = bgColor;
+    definePath();
+    ctx.fill();
+
+    // Prepare Logo Source (Bg Removal if needed)
+    let logoSource = currentLogo;
+    if (removeBg && currentLogo) {
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = currentLogo.width;
+        offCanvas.height = currentLogo.height;
+        const offCtx = offCanvas.getContext('2d');
+        offCtx.drawImage(currentLogo, 0, 0);
+
+        const imageData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+        const data = imageData.data;
+        const bgR = data[0], bgG = data[1], bgB = data[2];
+        const tolerance = 45;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const diff = Math.sqrt(
+                Math.pow(data[i] - bgR, 2) + Math.pow(data[i + 1] - bgG, 2) + Math.pow(data[i + 2] - bgB, 2)
+            );
+            if (diff < tolerance) data[i + 3] = 0;
+        }
+        offCtx.putImageData(imageData, 0, 0);
+        logoSource = offCanvas;
+    }
+
+    // 2. Draw Logo Clipped to Shape
+    ctx.save();
+    definePath(); // Re-define path for clipping
+    ctx.clip();
+    ctx.drawImage(logoSource, x, y, logoW, logoW);
+    ctx.restore();
+}
+
+// Download & Share
+window.downloadQR = function () {
     const canvas = document.querySelector('#qr-wrapper canvas');
     if (canvas) {
         const link = document.createElement('a');
@@ -202,7 +342,7 @@ window.downloadQR = function() {
     }
 }
 
-window.shareQR = async function() {
+window.shareQR = async function () {
     const canvas = document.querySelector('#qr-wrapper canvas');
     if (canvas && navigator.share) {
         canvas.toBlob(async (blob) => {
@@ -220,21 +360,13 @@ window.shareQR = async function() {
     }
 }
 
-// --- History / LocalStorage ---
-
+// History
 function saveToHistory(label, content, type) {
     let history = JSON.parse(localStorage.getItem('qr_history') || '[]');
-    // Avoid duplicates at top
     if (history.length > 0 && history[0].content === content) return;
 
-    history.unshift({
-        label,
-        content,
-        type,
-        date: new Date().toLocaleDateString()
-    });
-
-    if (history.length > 10) history.pop(); // Keep last 10
+    history.unshift({ label, content, type, date: new Date().toLocaleDateString() });
+    if (history.length > 10) history.pop();
     localStorage.setItem('qr_history', JSON.stringify(history));
     loadHistory();
 }
@@ -242,17 +374,17 @@ function saveToHistory(label, content, type) {
 function loadHistory() {
     const list = document.getElementById('history-list');
     const history = JSON.parse(localStorage.getItem('qr_history') || '[]');
-    
+
     if (history.length === 0) {
         list.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">No recent QR codes</p>';
         return;
     }
 
     list.innerHTML = history.map(item => `
-        <div class="flex items-center justify-between p-3 rounded-lg bg-slate-800/40 hover:bg-slate-700/50 cursor-pointer border border-transparent hover:border-slate-600 transition-all group" onclick="restoreFromHistory('${item.content}', '${item.type}')">
+        <div class="flex items-center justify-between p-3 rounded-lg bg-slate-800/40 hover:bg-slate-700/50 cursor-pointer border border-transparent hover:border-slate-600 transition-all group" onclick="document.getElementById('qr-input').value = '${item.content}'; generateQR()">
             <div class="flex items-center gap-3 overflow-hidden">
                 <div class="w-8 h-8 rounded bg-slate-700/50 flex items-center justify-center text-slate-400">
-                        ${getIconForType(item.type)}
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                 </div>
                 <div class="flex flex-col min-w-0">
                     <span class="text-sm text-slate-200 truncate font-medium">${item.label}</span>
@@ -266,41 +398,16 @@ function loadHistory() {
     `).join('');
 }
 
-function getIconForType(type) {
-    if (type === 'wifi') return '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" /></svg>';
-    if (type === 'email') return '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>';
-    return '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>';
-}
-
-window.restoreFromHistory = function(content, type) {
-    switchTab(type);
-    
-    // To keep simple: We will just set it in the "Link/Text" area if it's complex, OR parsing logic.
-    if (type === 'url') {
-        document.getElementById('qr-input').value = content;
-    } else if (type === 'wifi') {
-        const ssid = content.match(/S:(.*?);/)?.[1] || "";
-        const pass = content.match(/P:(.*?);/)?.[1] || "";
-        document.getElementById('wifi-ssid').value = ssid;
-        document.getElementById('wifi-pass').value = pass;
-    } else if (type === 'email') {
-        const email = content.split('?')[0].replace('mailto:', '');
-        document.getElementById('email-address').value = email;
-    }
-    
-    generateQR(false); 
-}
-
-window.clearHistory = function() {
-    if(confirm('Clear all history?')) {
-        localStorage.removeItem('qr_history');
-        loadHistory();
-    }
-}
-
-window.deleteHistoryItem = function(content) {
+window.deleteHistoryItem = function (content) {
     let history = JSON.parse(localStorage.getItem('qr_history') || '[]');
     history = history.filter(h => h.content !== content);
     localStorage.setItem('qr_history', JSON.stringify(history));
     loadHistory();
+}
+
+window.clearHistory = function () {
+    if (confirm('Clear all history?')) {
+        localStorage.removeItem('qr_history');
+        loadHistory();
+    }
 }
