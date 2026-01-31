@@ -4,8 +4,6 @@
 
 A premium, privacy-focused QR code generator built with modern web technologies. Create high-resolution, customized QR codes instantly.
 
-![QR Pro Preview](https://via.placeholder.com/800x400?text=App+Preview)
-
 ---
 
 ## ✨ Key Features
@@ -53,7 +51,7 @@ A premium, privacy-focused QR code generator built with modern web technologies.
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Start-Automating/basic-qr-code-generator.git
+   git clone https://github.com/sanishaukhale/basic-qr-code-generator.git
    ```
 
 2. **Open `index.html`**
